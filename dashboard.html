@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - VidyaFree</title>
+  <style>
+    :root {
+      --primary: #4f46e5; --primary-dark: #4338ca; --secondary: #06b6d4;
+      --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+      --dark: #1e293b; --gray: #64748b; --light: #f8fafc; --white: #fff;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+      --radius: 12px; --radius-sm: 8px; --transition: all 0.3s ease;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--light); color: var(--dark); line-height: 1.6; }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 260px; background: var(--dark); color: white;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      display: flex; flex-direction: column; transition: var(--transition);
+    }
+    .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 0.75rem; }
+    .sidebar-header .logo-icon { font-size: 1.8rem; }
+    .sidebar-header h2 { font-size: 1.1rem; font-weight: 700; }
+    .sidebar-header p { font-size: 0.75rem; color: #94a3b8; }
+    .nav-menu { flex: 1; padding: 1rem 0; overflow-y: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.85rem 1.5rem; cursor: pointer;
+      color: #cbd5e1; font-size: 0.9rem; font-weight: 500;
+      transition: var(--transition); border-left: 3px solid transparent;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; border-left-color: var(--primary); }
+    .nav-item .icon { font-size: 1.1rem; width: 24px; text-align: center; }
+    .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid #334155; font-size: 0.8rem; color: #94a3b8; }
+    .main { margin-left: 260px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      background: white; padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 50;
+    }
+    .topbar h1 { font-size: 1.3rem; font-weight: 700; }
+    .topbar-actions { display: flex; gap: 0.75rem; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 1rem; border-radius: var(--radius-sm);
+      font-weight: 600; font-size: 0.85rem; cursor: pointer;
+      border: none; transition: var(--transition); text-decoration: none;
+    }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: white; color: var(--dark); border: 1px solid #e2e8f0; }
+    .btn-outline:hover { background: var(--light); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-warning { background: var(--warning); color: white; }
+    .content { padding: 2rem; flex: 1; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card {
+      background: white; border-radius: var(--radius); padding: 1.5rem;
+      box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.05);
+    }
+    .stat-card .stat-label { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.3rem; }
+    .stat-card .stat-value { font-size: 2rem; font-weight: 800; color: var(--dark); }
+    .stat-card .stat-change { font-size: 0.8rem; margin-top: 0.3rem; }
+    .stat-card.books { border-left: 4px solid var(--primary); }
+    .stat-card.papers { border-left: 4px solid var(--secondary); }
+    .stat-card.ebooks { border-left: 4px solid var(--warning); }
+    .stat-card.total { border-left: 4px solid var(--success); }
+    .card {
+      background: white; border-radius: var(--radius);
+      box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem; overflow: hidden;
+    }
+    .card-header {
+      padding: 1.2rem 1.5rem; border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    .card-header h3 { font-size: 1.1rem; font-weight: 700; }
+    .card-body { padding: 1.5rem; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group label { font-weight: 600; font-size: 0.85rem; color: var(--dark); }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: var(--radius-sm);
+      font-size: 0.9rem; outline: none; transition: var(--transition); font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-group small { color: var(--gray); font-size: 0.8rem; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 0.75rem 1.2rem; background: none; border: none;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer;
+      color: var(--gray); border-bottom: 2px solid transparent;
+      margin-bottom: -2px; transition: var(--transition);
+    }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-btn:hover { color: var(--dark); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.85rem 1rem; text-align: left; font-size: 0.85rem; }
+    th { background: #f8fafc; font-weight: 700; color: var(--gray); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+    tr { border-bottom: 1px solid #f1f5f9; transition: var(--transition); }
+    tr:hover { background: #f8fafc; }
+    td .tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .tag-book { background: #ede9fe; color: var(--primary); }
+    .tag-paper { background: #cffafe; color: #0e7490; }
+    .tag-ebook { background: #fef3c7; color: #b45309; }
+    .tag-class { background: #f1f5f9; color: var(--gray); }
+    .actions { display: flex; gap: 0.4rem; }
+    .actions .btn { padding: 0.35rem 0.7rem; font-size: 0.75rem; }
+    .search-bar { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .search-bar input { flex: 1; min-width: 200px; padding: 0.6rem 1rem; border: 2px solid #e2e8f0; border-radius: var(--radius-sm); font-size: 0.9rem; outline: none; }
+    .search-bar input:focus { border-color: var(--primary); }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center;
+      z-index: 200; padding: 1rem;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white; border-radius: var(--radius);
+      width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg); animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .modal-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #f1f5f9; display: flex; gap: 0.5rem; justify-content: flex-end; }
+    .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast {
+      background: var(--dark); color: white; padding: 0.85rem 1.2rem;
+      border-radius: var(--radius-sm); box-shadow: var(--shadow-lg);
+      font-size: 0.9rem; animation: toastIn 0.3s ease;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    .empty-state { text-align: center; padding: 3rem; color: var(--gray); }
+    .empty-state .emoji { font-size: 3rem; margin-bottom: 0.5rem; }
+    .danger-zone { border: 2px solid #fecaca; border-radius: var(--radius); padding: 1.5rem; background: #fef2f2; }
+    .danger-zone h4 { color: var(--danger); margin-bottom: 0.5rem; }
+    .danger-zone p { color: var(--gray); font-size: 0.9rem; margin-bottom: 1rem; }
+    .hamburger { display: none; font-size: 1.5rem; cursor: pointer; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); width: 280px; }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .hamburger { display: block; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: none; z-index: 90; }
+    .overlay.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="logo-icon">📚</span>
+        <div><h2>VidyaFree</h2><p>Admin Panel</p></div>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="icon">📊</span> Dashboard</div>
+        <div class="nav-item" data-tab="upload" onclick="switchTab('upload')"><span class="icon">⬆️</span> Upload Content</div>
+        <div class="nav-item" data-tab="books" onclick="switchTab('books')"><span class="icon">📖</span> Manage Books</div>
+        <div class="nav-item" data-tab="papers" onclick="switchTab('papers')"><span class="icon">📝</span> Manage Papers</div>
+        <div class="nav-item" data-tab="ebooks" onclick="switchTab('ebooks')"><span class="icon">📚</span> Manage eBooks</div>
+        <div class="nav-item" data-tab="settings" onclick="switchTab('settings')"><span class="icon">⚙️</span> Settings</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="margin-bottom:0.5rem">👤 <span id="adminUser">admin</span></div>
+        <button class="btn btn-danger btn-sm" style="width:100%" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:1rem">
+          <span class="hamburger" onclick="toggleSidebar()">☰</span>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary btn-sm" onclick="switchTab('upload')">+ New Upload</button>
+        </div>
+      </div>
+      <div class="content">
+        <!-- DASHBOARD -->
+        <div class="tab-content active" id="tab-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card books"><div class="stat-label">📖 NCERT Books</div><div class="stat-value" id="statBooks">0</div><div class="stat-change" style="color:var(--primary)">Total uploaded</div></div>
+            <div class="stat-card papers"><div class="stat-label">📝 Sample Papers</div><div class="stat-value" id="statPapers">0</div><div class="stat-change" style="color:var(--secondary)">Total uploaded</div></div>
+            <div class="stat-card ebooks"><div class="stat-label">📚 eBooks</div><div class="stat-value" id="statEbooks">0</div><div class="stat-change" style="color:var(--warning)">Total uploaded</div></div>
+            <div class="stat-card total"><div class="stat-label">📦 Total Resources</div><div class="stat-value" id="statTotal">0</div><div class="stat-change" style="color:var(--success)">All content</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>🕐 Recent Uploads</h3><button class="btn btn-outline btn-sm" onclick="switchTab('upload')">+ Upload New</button></div>
+            <div class="card-body">
+              <div class="table-wrap">
+                <table><thead><tr><th>Title</th><th>Type</th><th>Subject</th><th>Class</th><th>Date</th></tr></thead><tbody id="recentTable"></tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- UPLOAD -->
+        <div class="tab-content" id="tab-upload">
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchUploadTab('book')">📖 NCERT Book</button>
+            <button class="tab-btn" onclick="switchUploadTab('paper')">📝 Sample Paper</button>
+            <button class="tab-btn" onclick="switchUploadTab('ebook')">📚 eBook</button>
+          </div>
+          <div class="upload-tab active" id="upload-book">
+            <div class="card">
+              <div class="card-header"><h3>📖 Upload NCERT Book</h3></div>
+              <div class="card-body">
+                <form id="formBook" onsubmit="handleUpload(event, 'books')">
+                  <div class="form-grid">
+                    <div class="form-group"><label>Book Title *</label><input type="text" name="title" placeholder="e.g. NCERT Mathematics Class 10" required></div>
+                    <div class="form-group"><label>Subject *</label><select name="subject" required><option value="">Select Subject</option><option>Mathematics</option><option>Science</option><option>Social Science</option><option>English</option><option>Hindi</option><option>Sanskrit</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Accountancy</option><option>Economics</option><option>History</option><option>Political Science</option><option>Computer Science</option><option>Business Studies</option></select></div>
+                    <div class="form-group"><label>Class *</label><select name="class" required><option value="">Select Class</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option><option>Class 11</option><option>Class 12</option></select></div>
+                    <div class="form-group"><label>PDF / Download Link *</label><input type="url" name="url" placeholder="https://drive.google.com/... or direct PDF link" required><small>Paste a Google Drive, Dropbox, or direct PDF URL</small></div>
+                  </div>
+                  <div style="margin-top:1.5rem"><button type="submit" class="btn btn-primary">⬆️ Upload Book</button></div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="upload-tab" id="upload-paper" style="display:none">
+            <div class="card">
+              <div class="card-header"><h3>📝 Upload Sample Paper</h3></div>
+              <div class="card-body">
+                <form id="formPaper" onsubmit="handleUpload(event, 'papers')">
+                  <div class="form-grid">
+                    <div class="form-group"><label>Paper Title *</label><input type="text" name="title" placeholder="e.g. CBSE Class 10 Maths 2024" required></div>
+                    <div class="form-group"><label>Subject *</label><select name="subject" required><option value="">Select Subject</option><option>Mathematics</option><option>Science</option><option>Social Science</option><option>English</option><option>Hindi</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Computer Science</option></select></div>
+                    <div class="form-group"><label>Class *</label><select name="class" required><option value="">Select Class</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option><option>Class 11</option><option>Class 12</option></select></div>
+                    <div class="form-group"><label>Year *</label><input type="text" name="year" placeholder="e.g. 2024" required></div>
+                    <div class="form-group" style="grid-column: 1 / -1"><label>PDF / Download Link *</label><input type="url" name="url" placeholder="https://drive.google.com/... or direct PDF link" required><small>Paste a Google Drive, Dropbox, or direct PDF URL</small></div>
+                  </div>
+                  <div style="margin-top:1.5rem"><button type="submit" class="btn btn-primary">⬆️ Upload Paper</button></div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="upload-tab" id="upload-ebook" style="display:none">
+            <div class="card">
+              <div class="card-header"><h3>📚 Upload eBook</h3></div>
+              <div class="card-body">
+                <form id="formEbook" onsubmit="handleUpload(event, 'ebooks')">
+                  <div class="form-grid">
+                    <div class="form-group"><label>eBook Title *</label><input type="text" name="title" placeholder="e.g. R.D. Sharma Mathematics Class 10" required></div>
+                    <div class="form-group"><label>Author</label><input type="text" name="author" placeholder="e.g. R.D. Sharma"></div>
+                    <div class="form-group"><label>Subject *</label><select name="subject" required><option value="">Select Subject</option><option>Mathematics</option><option>Science</option><option>Social Science</option><option>English</option><option>Hindi</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Computer Science</option></select></div>
+                    <div class="form-group"><label>Class *</label><select name="class" required><option value="">Select Class</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option><option>Class 11</option><option>Class 12</option></select></div>
+                    <div class="form-group" style="grid-column: 1 / -1"><label>PDF / Download Link *</label><input type="url" name="url" placeholder="https://drive.google.com/... or direct PDF link" required><small>Paste a Google Drive, Dropbox, or direct PDF URL</small></div>
+                  </div>
+                  <div style="margin-top:1.5rem"><button type="submit" class="btn btn-primary">⬆️ Upload eBook</button></div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGE BOOKS -->
+        <div class="tab-content" id="tab-books">
+          <div class="card">
+            <div class="card-header"><h3>📖 Manage NCERT Books</h3><div class="search-bar" style="margin:0"><input type="text" id="searchBooks" placeholder="🔍 Search books..." oninput="renderTable('books')"></div></div>
+            <div class="card-body">
+              <div class="table-wrap"><table><thead><tr><th>Title</th><th>Subject</th><th>Class</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tableBooks"></tbody></table></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGE PAPERS -->
+        <div class="tab-content" id="tab-papers">
+          <div class="card">
+            <div class="card-header"><h3>📝 Manage Sample Papers</h3><div class="search-bar" style="margin:0"><input type="text" id="searchPapers" placeholder="🔍 Search papers..." oninput="renderTable('papers')"></div></div>
+            <div class="card-body">
+              <div class="table-wrap"><table><thead><tr><th>Title</th><th>Subject</th><th>Class</th><th>Year</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tablePapers"></tbody></table></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGE EBOOKS -->
+        <div class="tab-content" id="tab-ebooks">
+          <div class="card">
+            <div class="card-header"><h3>📚 Manage eBooks</h3><div class="search-bar" style="margin:0"><input type="text" id="searchEbooks" placeholder="🔍 Search eBooks..." oninput="renderTable('ebooks')"></div></div>
+            <div class="card-body">
+              <div class="table-wrap"><table><thead><tr><th>Title</th><th>Author</th><th>Subject</th><th>Class</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tableEbooks"></tbody></table></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="tab-content" id="tab-settings">
+          <div class="card">
+            <div class="card-header"><h3>⚙️ Change Admin Password</h3></div>
+            <div class="card-body">
+              <form onsubmit="changePassword(event)">
+                <div class="form-grid" style="max-width:500px">
+                  <div class="form-group"><label>Current Password</label><input type="password" id="currPass" required></div>
+                  <div class="form-group"><label>New Password</label><input type="password" id="newPass" required minlength="6"></div>
+                  <div class="form-group"><label>Confirm New Password</label><input type="password" id="confPass" required></div>
+                </div>
+                <div style="margin-top:1.5rem"><button type="submit" class="btn btn-primary">🔒 Update Password</button></div>
+              </form>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>💾 Data Management</h3></div>
+            <div class="card-body">
+              <div class="form-grid" style="max-width:500px">
+                <div class="form-group"><label>Export Data (Backup)</label><button class="btn btn-success" onclick="exportData()" style="width:100%">📤 Export All Data to JSON</button><small>Downloads a backup file you can restore later</small></div>
+                <div class="form-group"><label>Import Data (Restore)</label><input type="file" id="importFile" accept=".json" onchange="importData(this)"><small>Select a previously exported JSON backup file</small></div>
+              </div>
+            </div>
+          </div>
+          <div class="card danger-zone">
+            <h4>🗑️ Danger Zone</h4>
+            <p>These actions cannot be undone. All your uploaded content will be permanently deleted.</p>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+              <button class="btn btn-danger" onclick="clearType('books')">Clear Books</button>
+              <button class="btn btn-danger" onclick="clearType('papers')">Clear Papers</button>
+              <button class="btn btn-danger" onclick="clearType('ebooks')">Clear eBooks</button>
+              <button class="btn btn-danger" onclick="clearAll()">⚠️ Clear ALL Data</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header"><h3>✏️ Edit Item</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEdit()">💾 Save Changes</button></div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== AUTH ====================
+    const AUTH_KEY = 'vf_admin_auth';
+    const PASS_KEY = 'vf_admin_password';
+    const DEFAULT_PASS = 'vidyafree123';
+
+    if (localStorage.getItem(AUTH_KEY) !== 'true') {
+      window.location.href = 'index.html';
+    }
+    document.getElementById('adminUser').textContent = localStorage.getItem('vf_admin_user') || 'admin';
+
+    function logout() {
+      localStorage.removeItem(AUTH_KEY);
+      localStorage.removeItem('vf_admin_user');
+      window.location.href = 'index.html';
+    }
+
+    // ==================== DATA ====================
+    function getData(key) { try { return JSON.parse(localStorage.getItem('vf_' + key) || '[]'); } catch { return []; } }
+    function setData(key, data) { localStorage.setItem('vf_' + key, JSON.stringify(data)); }
+    function generateId(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+    const DEMO_BOOKS = [
+      { id: "b1", title: "NCERT Mathematics Class 10", subject: "Mathematics", class: "Class 10", type: "NCERT Book", url: "https://ncert.nic.in/textbook/pdf/jemh1dd.zip", date: "2024-01-15" },
+      { id: "b2", title: "NCERT Science Class 10", subject: "Science", class: "Class 10", type: "NCERT Book", url: "https://ncert.nic.in/textbook/pdf/jesc1dd.zip", date: "2024-01-15" },
+      { id: "b3", title: "NCERT Mathematics Class 9", subject: "Mathematics", class: "Class 9", type: "NCERT Book", url: "https://ncert.nic.in/textbook/pdf/iemh1dd.zip", date: "2024-01-10" },
+      { id: "b4", title: "NCERT Physics Class 11", subject: "Physics", class: "Class 11", type: "NCERT Book", url: "https://ncert.nic.in/textbook/pdf/keph1dd.zip", date: "2024-01-20" },
+      { id: "b5", title: "NCERT Chemistry Class 12", subject: "Chemistry", class: "Class 12", type: "NCERT Book", url: "https://ncert.nic.in/textbook/pdf/lech1dd.zip", date: "2024-01-22" },
+    ];
+    const DEMO_PAPERS = [
+      { id: "p1", title: "CBSE Class 10 Maths Standard 2024", subject: "Mathematics", class: "Class 10", year: "2024", type: "Sample Paper", url: "#", date: "2024-02-01" },
+      { id: "p2", title: "CBSE Class 10 Science 2024", subject: "Science", class: "Class 10", year: "2024", type: "Sample Paper", url: "#", date: "2024-02-01" },
+      { id: "p3", title: "CBSE Class 12 Physics 2024", subject: "Physics", class: "Class 12", year: "2024", type: "Sample Paper", url: "#", date: "2024-02-05" },
+      { id: "p4", title: "CBSE Class 9 Maths 2023", subject: "Mathematics", class: "Class 9", year: "2023", type: "Sample Paper", url: "#", date: "2024-01-20" },
+      { id: "p5", title: "CBSE Class 11 Chemistry 2024", subject: "Chemistry", class: "Class 11", year: "2024", type: "Sample Paper", url: "#", date: "2024-02-10" },
+    ];
+    const DEMO_EBOOKS = [
+      { id: "e1", title: "R.D. Sharma Mathematics Class 10", subject: "Mathematics", class: "Class 10", author: "R.D. Sharma", type: "eBook", url: "#", date: "2024-01-25" },
+      { id: "e2", title: "S.L. Arora Physics Class 11", subject: "Physics", class: "Class 11", author: "S.L. Arora", type: "eBook", url: "#", date: "2024-01-28" },
+      { id: "e3", title: "Pradeep Chemistry Class 12", subject: "Chemistry", class: "Class 12", author: "Pradeep", type: "eBook", url: "#", date: "2024-02-01" },
+    ];
+
+    function initDemoData() {
+      if (!localStorage.getItem('vf_books')) setData('books', DEMO_BOOKS);
+      if (!localStorage.getItem('vf_papers')) setData('papers', DEMO_PAPERS);
+      if (!localStorage.getItem('vf_ebooks')) setData('ebooks', DEMO_EBOOKS);
+    }
+
+    // ==================== NAVIGATION ====================
+    let currentTab = 'dashboard';
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
+      const titles = { dashboard: 'Dashboard', upload: 'Upload Content', books: 'Manage Books', papers: 'Manage Papers', ebooks: 'Manage eBooks', settings: 'Settings' };
+      document.getElementById('pageTitle').textContent = titles[tab];
+      if (tab === 'dashboard') updateDashboard();
+      if (tab === 'books') renderTable('books');
+      if (tab === 'papers') renderTable('papers');
+      if (tab === 'ebooks') renderTable('ebooks');
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').classList.remove('active');
+    }
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('overlay').classList.toggle('active');
+    }
+
+    // ==================== UPLOAD TABS ====================
+    function switchUploadTab(type) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      document.querySelectorAll('.upload-tab').forEach(t => t.style.display = 'none');
+      document.getElementById('upload-' + type).style.display = 'block';
+    }
+
+    // ==================== UPLOAD ====================
+    function handleUpload(e, type) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const data = { id: generateId(type[0]) };
+      formData.forEach((v, k) => data[k] = v);
+      data.type = type === 'books' ? 'NCERT Book' : type === 'papers' ? 'Sample Paper' : 'eBook';
+      data.date = new Date().toISOString().split('T')[0];
+      const items = getData(type);
+      items.unshift(data);
+      setData(type, items);
+      form.reset();
+      showToast('✅ ' + data.title + ' uploaded successfully!', 'success');
+      updateDashboard();
+    }
+
+    // ==================== DASHBOARD ====================
+    function updateDashboard() {
+      const books = getData('books');
+      const papers = getData('papers');
+      const ebooks = getData('ebooks');
+      const total = books.length + papers.length + ebooks.length;
+      document.getElementById('statBooks').textContent = books.length;
+      document.getElementById('statPapers').textContent = papers.length;
+      document.getElementById('statEbooks').textContent = ebooks.length;
+      document.getElementById('statTotal').textContent = total;
+      const all = [...books, ...papers, ...ebooks].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
+      const tbody = document.getElementById('recentTable');
+      tbody.innerHTML = all.length ? all.map(item => {
+        const tagClass = item.type === 'NCERT Book' ? 'tag-book' : item.type === 'Sample Paper' ? 'tag-paper' : 'tag-ebook';
+        return `<tr><td>${item.title}</td><td><span class="tag ${tagClass}">${item.type}</span></td><td>${item.subject}</td><td><span class="tag tag-class">${item.class}</span></td><td>${item.date}</td></tr>`;
+      }).join('') : '<tr><td colspan="5" class="empty-state"><div class="emoji">📭</div>No uploads yet</td></tr>';
+    }
+
+    // ==================== TABLES ====================
+    function renderTable(type) {
+      const searchId = 'search' + type.charAt(0).toUpperCase() + type.slice(1);
+      const searchVal = (document.getElementById(searchId)?.value || '').toLowerCase();
+      let items = getData(type);
+      if (searchVal) items = items.filter(i => i.title.toLowerCase().includes(searchVal) || i.subject?.toLowerCase().includes(searchVal));
+      const tbody = document.getElementById('table' + type.charAt(0).toUpperCase() + type.slice(1));
+      if (!tbody) return;
+      if (!items.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="emoji">📭</div><h3>No items found</h3></td></tr>'; return; }
+      tbody.innerHTML = items.map(item => {
+        let extraCols = '';
+        if (type === 'papers') extraCols = `<td>${item.year || '-'}</td>`;
+        if (type === 'ebooks') extraCols = `<td>${item.author || '-'}</td>`;
+        return `<tr><td><strong>${item.title}</strong></td>${type === 'ebooks' ? extraCols : ''}<td>${item.subject}</td><td><span class="tag tag-class">${item.class}</span></td>${type === 'papers' ? extraCols : ''}<td>${item.date}</td><td><div class="actions"><a href="${item.url}" class="btn btn-primary btn-sm" target="_blank">📥</a><button class="btn btn-outline btn-sm" onclick="editItem('${type}', '${item.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteItem('${type}', '${item.id}')">🗑️</button></div></td></tr>`;
+      }).join('');
+    }
+
+    // ==================== CRUD ====================
+    let editingItem = null;
+    let editingType = null;
+
+    function deleteItem(type, id) {
+      if (!confirm('Are you sure you want to delete this item?')) return;
+      let items = getData(type);
+      items = items.filter(i => i.id !== id);
+      setData(type, items);
+      renderTable(type);
+      updateDashboard();
+      showToast('🗑️ Item deleted', 'warning');
+    }
+
+    function editItem(type, id) {
+      const items = getData(type);
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      editingItem = item; editingType = type;
+      const fields = [
+        { name: 'title', label: 'Title', type: 'text' },
+        { name: 'subject', label: 'Subject', type: 'text' },
+        { name: 'class', label: 'Class', type: 'text' },
+        { name: 'url', label: 'URL', type: 'url' }
+      ];
+      if (type === 'papers') fields.push({ name: 'year', label: 'Year', type: 'text' });
+      if (type === 'ebooks') fields.push({ name: 'author', label: 'Author', type: 'text' });
+      document.getElementById('modalBody').innerHTML = fields.map(f => `
+        <div class="form-group" style="margin-bottom:1rem"><label>${f.label}</label><input type="${f.type}" id="edit_${f.name}" value="${item[f.name] || ''}"></div>
+      `).join('');
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('active');
+      editingItem = null; editingType = null;
+    }
+
+    function saveEdit() {
+      if (!editingItem || !editingType) return;
+      const items = getData(editingType);
+      const idx = items.findIndex(i => i.id === editingItem.id);
+      if (idx === -1) return;
+      ['title', 'subject', 'class', 'url', 'year', 'author'].forEach(field => {
+        const el = document.getElementById('edit_' + field);
+        if (el) items[idx][field] = el.value;
+      });
+      setData(editingType, items);
+      renderTable(editingType);
+      updateDashboard();
+      closeModal();
+      showToast('✅ Changes saved!', 'success');
+    }
+
+    // ==================== SETTINGS ====================
+    function changePassword(e) {
+      e.preventDefault();
+      const curr = document.getElementById('currPass').value;
+      const newP = document.getElementById('newPass').value;
+      const conf = document.getElementById('confPass').value;
+      const stored = localStorage.getItem(PASS_KEY) || DEFAULT_PASS;
+      if (curr !== stored) { showToast('❌ Current password is incorrect', 'error'); return; }
+      if (newP !== conf) { showToast('❌ Passwords do not match', 'error'); return; }
+      if (newP.length < 6) { showToast('❌ Password must be at least 6 characters', 'error'); return; }
+      localStorage.setItem(PASS_KEY, newP);
+      e.target.reset();
+      showToast('🔒 Password updated successfully!', 'success');
+    }
+
+    function exportData() {
+      const data = { books: getData('books'), papers: getData('papers'), ebooks: getData('ebooks'), exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'vidyafree-backup-' + new Date().toISOString().split('T')[0] + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📤 Backup downloaded!', 'success');
+    }
+
+    function importData(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.books) setData('books', data.books);
+          if (data.papers) setData('papers', data.papers);
+          if (data.ebooks) setData('ebooks', data.ebooks);
+          updateDashboard();
+          renderTable('books'); renderTable('papers'); renderTable('ebooks');
+          showToast('📥 Data restored successfully!', 'success');
+        } catch (err) { showToast('❌ Invalid backup file', 'error'); }
+      };
+      reader.readAsText(file);
+      input.value = '';
+    }
+
+    function clearType(type) {
+      const name = type === 'books' ? 'books' : type === 'papers' ? 'papers' : 'ebooks';
+      if (!confirm('Delete ALL ' + name + '? This cannot be undone!')) return;
+      setData(type, []);
+      renderTable(type);
+      updateDashboard();
+      showToast('🗑️ All ' + name + ' cleared', 'warning');
+    }
+
+    function clearAll() {
+      if (!confirm('⚠️ DELETE EVERYTHING? All books, papers, and eBooks will be permanently lost!')) return;
+      if (!confirm('Are you absolutely sure? This action is irreversible.')) return;
+      setData('books', []); setData('papers', []); setData('ebooks', []);
+      updateDashboard();
+      renderTable('books'); renderTable('papers'); renderTable('ebooks');
+      showToast('🗑️ All data cleared', 'warning');
+    }
+
+    // ==================== TOAST ====================
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+    }
+
+    // ==================== INIT ====================
+    initDemoData();
+    updateDashboard();
+  </script>
+</body>
+</html>
