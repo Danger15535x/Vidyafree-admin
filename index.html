@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Login — VidyaFree</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --board: #1B4332; --board-dark: #123024; --chalk: #F7F4EA;
+  --paper: #FBF8F1; --ink: #1D3557; --marigold: #E8871E;
+  --marigold-dk: #C96A0C; --text: #2B2B28; --text-soft: #5B5A52;
+  --line: #E1DCCB; --radius: 14px; --shadow-lg: 0 14px 40px rgba(0,0,0,.15);
+  --display: "Baloo 2", "Segoe UI", sans-serif;
+  --body: "Inter", "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+  --danger: #C0392B; --success: #2D6A4F;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--board); min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; font-family: var(--body); color: var(--text);
+}
+.card {
+  background: #fff; border-radius: var(--radius);
+  padding: 40px; width: 100%; max-width: 420px;
+  box-shadow: var(--shadow-lg);
+}
+.brand { text-align: center; margin-bottom: 32px; }
+.brand h1 { font-family: var(--display); font-size: 1.6rem; color: var(--board); margin: 0; }
+.brand h1 span { color: var(--marigold); }
+.brand p { color: var(--text-soft); margin: 8px 0 0; font-size: .9rem; }
+.brand .icon { font-size: 2.2rem; margin-bottom: 8px; }
+
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 6px; }
+.form-group input {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 10px; font-family: var(--body); font-size: .95rem;
+  transition: border-color .15s, box-shadow .15s;
+}
+.form-group input:focus { border-color: var(--board); box-shadow: 0 0 0 3px rgba(27,67,50,.08); outline: none; }
+
+.btn {
+  width: 100%; padding: 12px; border: none; border-radius: 10px;
+  background: var(--board); color: var(--chalk); font-family: var(--body);
+  font-size: 1rem; font-weight: 700; cursor: pointer; transition: all .15s;
+}
+.btn:hover { background: var(--board-dark); transform: translateY(-1px); }
+
+.error { color: var(--danger); font-size: .85rem; font-weight: 600; margin: -8px 0 12px; min-height: 20px; }
+.hint { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); text-align: center; }
+.hint p { font-size: .8rem; color: var(--text-soft); margin: 0; }
+.hint code { background: var(--paper); padding: 2px 6px; border-radius: 4px; font-family: var(--mono); }
+
+.back-link { display: block; text-align: center; margin-top: 16px; font-size: .85rem; color: var(--text-soft); }
+.back-link:hover { color: var(--marigold); }
+
+@media (max-width: 480px) { .card { padding: 28px; } }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="brand">
+    <div class="icon">🔒</div>
+    <h1>VidyaFree <span>Admin</span></h1>
+    <p>Manage books, papers & uploads</p>
+  </div>
+
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" value="admin" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <div class="error" id="errorMsg"></div>
+    <button type="submit" class="btn">Sign In</button>
+  </form>
+
+  <div class="hint">
+    <p>🔑 Default: <code>admin / vidyafree123</code></p>
+  </div>
+</div>
+
+<script>
+// Check if already logged in
+if (localStorage.getItem('vf_admin_session') === 'active') {
+  window.location.href = 'dashboard.html';
+}
+
+// Default admin data
+if (!localStorage.getItem('vf_admin')) {
+  localStorage.setItem('vf_admin', JSON.stringify({ password: 'vidyafree123' }));
+}
+
+// Login handler
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value;
+  const adminData = JSON.parse(localStorage.getItem('vf_admin') || '{}');
+  const errorEl = document.getElementById('errorMsg');
+
+  if (user === 'admin' && pass === (adminData.password || 'vidyafree123')) {
+    localStorage.setItem('vf_admin_session', 'active');
+    localStorage.setItem('vf_admin_login_time', Date.now().toString());
+    window.location.href = 'dashboard.html';
+  } else {
+    errorEl.textContent = 'Invalid username or password.';
+  }
+});
+</script>
+</body>
+</html>

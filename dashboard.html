@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Dashboard — VidyaFree</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --board: #1B4332; --board-dark: #123024; --chalk: #F7F4EA;
+  --paper: #FBF8F1; --ink: #1D3557; --marigold: #E8871E;
+  --marigold-dk: #C96A0C; --marigold-lt: #FFF3E0;
+  --text: #2B2B28; --text-soft: #5B5A52; --line: #E1DCCB;
+  --radius: 14px; --radius-sm: 10px;
+  --shadow: 0 4px 20px rgba(27,67,50,.10);
+  --display: "Baloo 2", "Segoe UI", sans-serif;
+  --body: "Inter", "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+  --success: #2D6A4F; --danger: #C0392B;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: #F3F0E8; color: var(--text);
+  font-family: var(--body); line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  width: 260px; background: var(--board); color: var(--chalk);
+  display: flex; flex-direction: column;
+  position: fixed; inset: 0 auto 0 0; z-index: 100;
+  transition: transform .25s;
+}
+.sidebar-brand {
+  padding: 20px; font-family: var(--display); font-size: 1.2rem;
+  font-weight: 700; border-bottom: 1px solid rgba(247,244,234,.1);
+  display: flex; align-items: center; gap: 8px;
+}
+.sidebar-brand span { color: var(--marigold); }
+.sidebar-nav { padding: 16px 12px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 8px;
+  color: rgba(247,244,234,.75); font-size: .9rem;
+  font-weight: 600; transition: all .15s; margin-bottom: 4px;
+  cursor: pointer; border: none; background: none; width: 100%;
+}
+.nav-item:hover { background: rgba(247,244,234,.08); color: var(--chalk); }
+.nav-item.active { background: var(--marigold); color: #241100; }
+.sidebar-footer {
+  padding: 16px 20px; border-top: 1px solid rgba(247,244,234,.1);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .85rem;
+}
+.btn-sm { padding: 6px 12px; font-size: .78rem; border-radius: 8px; border: 1px solid rgba(247,244,234,.3); background: none; color: var(--chalk); cursor: pointer; }
+.btn-sm:hover { background: rgba(247,244,234,.1); }
+
+/* ---------- Main ---------- */
+.main { flex: 1; margin-left: 260px; min-height: 100vh; display: flex; flex-direction: column; }
+.topbar {
+  background: #fff; padding: 14px 24px; display: flex;
+  align-items: center; gap: 16px; border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar h2 { font-size: 1.2rem; color: var(--board); font-family: var(--display); margin: 0; }
+.topbar-actions { margin-left: auto; display: flex; gap: 10px; }
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 10px; font-size: 1rem;
+}
+.content { padding: 24px; flex: 1; }
+
+/* ---------- Tabs ---------- */
+.tab { display: none; animation: fadeIn .25s; }
+.tab.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---------- Stats ---------- */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 28px;
+}
+.stat-card {
+  background: #fff; border-radius: var(--radius-sm); padding: 20px;
+  display: flex; align-items: center; gap: 14px;
+  border: 1px solid var(--line); transition: box-shadow .15s;
+}
+.stat-card:hover { box-shadow: var(--shadow); }
+.stat-icon { font-size: 1.8rem; }
+.stat-num { display: block; font-family: var(--display); font-size: 1.5rem; font-weight: 700; color: var(--board); }
+.stat-label { font-size: .78rem; color: var(--text-soft); }
+
+/* ---------- Section ---------- */
+.section-box { background: #fff; border-radius: var(--radius-sm); border: 1px solid var(--line); padding: 20px; margin-bottom: 20px; }
+.section-box h3 { font-size: 1.1rem; margin: 0 0 16px; font-family: var(--display); color: var(--board); }
+.section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.section-header h3 { margin: 0; }
+
+/* ---------- Tables ---------- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+th {
+  text-align: left; padding: 10px 12px; background: var(--chalk);
+  font-weight: 600; color: var(--text-soft); font-size: .78rem;
+  text-transform: uppercase; letter-spacing: .04em;
+  border-bottom: 2px solid var(--line);
+}
+td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:hover td { background: var(--paper); }
+.table-actions { display: flex; gap: 6px; }
+.table-actions button { padding: 4px 10px; font-size: .75rem; }
+
+/* ---------- Search ---------- */
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 12px; min-width: 220px;
+}
+.search-box input { border: none; background: transparent; font-size: .85rem; flex: 1; outline: none; }
+
+/* ---------- Upload tabs ---------- */
+.upload-tabs {
+  display: flex; gap: 8px; margin-bottom: 20px;
+  border-bottom: 2px solid var(--line); padding-bottom: 12px;
+}
+.upload-tab {
+  background: none; border: none; padding: 8px 16px;
+  font-size: .9rem; font-weight: 600; color: var(--text-soft);
+  border-radius: 8px; cursor: pointer; font-family: inherit;
+}
+.upload-tab.active { background: var(--marigold-lt); color: var(--marigold-dk); }
+.upload-tab:hover { background: var(--paper); }
+
+/* ---------- Forms ---------- */
+.form { max-width: 640px; }
+.form h3 { margin-bottom: 18px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 6px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+  border-radius: 8px; font-family: var(--body); font-size: .9rem;
+  background: #fff; transition: border-color .15s, box-shadow .15s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--board); box-shadow: 0 0 0 3px rgba(27,67,50,.08); outline: none;
+}
+.form-group small { display: block; margin-top: 4px; font-size: .75rem; color: var(--text-soft); }
+.form-group small code { background: var(--paper); padding: 1px 4px; border-radius: 4px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-actions { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+.form-error { color: var(--danger); font-size: .82rem; font-weight: 600; }
+.form-success { color: var(--success); font-size: .82rem; font-weight: 600; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; font-size: .82rem; font-weight: 700; padding: 8px 14px;
+  border-radius: 8px; border: 1px solid transparent;
+  transition: all .15s; text-decoration: none; cursor: pointer;
+}
+.btn-primary { background: var(--board); color: var(--chalk); }
+.btn-primary:hover { background: var(--board-dark); transform: translateY(-1px); }
+.btn-ghost { border-color: var(--line); color: var(--ink); background: #fff; }
+.btn-ghost:hover { border-color: var(--ink); background: var(--paper); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: #a93226; }
+.btn-block { width: 100%; padding: 12px; font-size: 1rem; }
+
+/* ---------- Danger zone ---------- */
+.danger-zone {
+  background: #FDEAEA; border: 1px solid #F5B7B1;
+  border-radius: var(--radius-sm); padding: 16px;
+}
+.danger-zone p { margin: 0 0 12px; font-size: .85rem; color: var(--danger); }
+
+/* ---------- Empty state ---------- */
+.empty-state { text-align: center; padding: 50px 20px; }
+.empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: .6; }
+.empty-state h3 { color: var(--text-soft); font-size: 1.1rem; }
+.empty-state p { color: var(--text-soft); font-size: .88rem; }
+
+/* ---------- Upload form visibility ---------- */
+.upload-form { display: none; }
+.upload-form.active { display: block; animation: fadeIn .25s; }
+
+/* ---------- Loading ---------- */
+.loading { text-align: center; padding: 40px; color: var(--text-soft); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .sidebar-toggle { display: inline-flex; }
+  .content { padding: 16px; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  table { font-size: .78rem; }
+  th, td { padding: 8px; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <span>📚</span> Vidya<span>Free</span>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-tab="dashboard"><span>📊</span> Dashboard</button>
+    <button class="nav-item" data-tab="upload"><span>⬆️</span> Upload Content</button>
+    <button class="nav-item" data-tab="books"><span>📖</span> Manage Books</button>
+    <button class="nav-item" data-tab="papers"><span>📝</span> Manage Papers</button>
+    <button class="nav-item" data-tab="ebooks"><span>📚</span> Manage eBooks</button>
+    <button class="nav-item" data-tab="settings"><span>⚙️</span> Settings</button>
+  </nav>
+  <div class="sidebar-footer">
+    <span>👤 Admin</span>
+    <button class="btn-sm" id="logoutBtn">Logout</button>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <header class="topbar">
+    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+    <h2 id="pageTitle">Dashboard</h2>
+    <div class="topbar-actions">
+      <a href="../vidyafree-public/index.html" target="_blank" class="btn btn-ghost btn-sm">View Public Site ↗</a>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="tab active" id="tab-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📖</div>
+          <div><span class="stat-num" id="dashBookCount">0</span><span class="stat-label">NCERT Books</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📝</div>
+          <div><span class="stat-num" id="dashPaperCount">0</span><span class="stat-label">Sample Papers</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📚</div>
+          <div><span class="stat-num" id="dashEbookCount">0</span><span class="stat-label">eBooks</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📦</div>
+          <div><span class="stat-num" id="dashTotal">0</span><span class="stat-label">Total Items</span></div>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <h3>Recent Uploads</h3>
+        <div class="table-wrap">
+          <table id="recentTable">
+            <thead><tr><th>Type</th><th>Title</th><th>Class</th><th>Subject</th><th>Date</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty-state" id="recentEmpty" style="display:none;">
+            <div class="empty-icon">📭</div><p>No uploads yet. Start by uploading content!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="tab" id="tab-upload">
+      <div class="upload-tabs">
+        <button class="upload-tab active" data-upload="book">📖 NCERT Book</button>
+        <button class="upload-tab" data-upload="paper">📝 Sample Paper</button>
+        <button class="upload-tab" data-upload="ebook">📚 eBook / PDF</button>
+      </div>
+
+      <form class="form upload-form active" id="form-book">
+        <h3>Upload NCERT Book</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Class *</label>
+            <select id="bookClass" required>
+              <option value="">Select class</option>
+              <option value="nursery">Nursery</option><option value="kg">KG</option>
+              <option value="1">Class 1</option><option value="2">Class 2</option>
+              <option value="3">Class 3</option><option value="4">Class 4</option>
+              <option value="5">Class 5</option><option value="6">Class 6</option>
+              <option value="7">Class 7</option><option value="8">Class 8</option>
+              <option value="9">Class 9</option><option value="10">Class 10</option>
+              <option value="11">Class 11</option><option value="12">Class 12</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Subject *</label>
+            <input type="text" id="bookSubject" placeholder="e.g. Mathematics" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Book Title *</label>
+          <input type="text" id="bookTitle" placeholder="e.g. NCERT Maths Class 10" required>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="bookDesc" rows="3" placeholder="Brief description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>PDF Link *</label>
+          <input type="url" id="bookPdfUrl" placeholder="https://... or pdfs/file.pdf" required>
+          <small>Paste a direct PDF URL, or a relative path like <code>pdfs/math10.pdf</code></small>
+        </div>
+        <div class="form-group">
+          <label>Medium</label>
+          <select id="bookMedium"><option>English</option><option>Hindi</option><option>Both</option></select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">📤 Upload Book</button>
+          <span class="form-success" id="bookSuccess"></span>
+        </div>
+      </form>
+
+      <form class="form upload-form" id="form-paper">
+        <h3>Upload Sample Paper</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Class *</label>
+            <select id="paperClass" required>
+              <option value="">Select class</option>
+              <option value="9">Class 9</option><option value="10">Class 10</option>
+              <option value="11">Class 11</option><option value="12">Class 12</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Subject *</label>
+            <input type="text" id="paperSubject" placeholder="e.g. Mathematics (Standard)" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Paper Title *</label>
+          <input type="text" id="paperTitle" placeholder="e.g. Sample Paper 2026" required>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="paperDesc" rows="3" placeholder="e.g. Full CBSE pattern with answer key."></textarea>
+        </div>
+        <div class="form-group">
+          <label>PDF Link *</label>
+          <input type="url" id="paperPdfUrl" placeholder="https://... or pdfs/file.pdf" required>
+        </div>
+        <div class="form-group">
+          <label>Year / Session</label>
+          <input type="text" id="paperYear" placeholder="e.g. 2026">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">📤 Upload Paper</button>
+          <span class="form-success" id="paperSuccess"></span>
+        </div>
+      </form>
+
+      <form class="form upload-form" id="form-ebook">
+        <h3>Upload eBook / PDF</h3>
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" id="ebookTitle" placeholder="e.g. RD Sharma Class 10 Solutions" required>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" id="ebookCategory" placeholder="e.g. Reference Book, Notes">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="ebookDesc" rows="3" placeholder="Brief description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>PDF Link *</label>
+          <input type="url" id="ebookPdfUrl" placeholder="https://... or pdfs/file.pdf" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">📤 Upload eBook</button>
+          <span class="form-success" id="ebookSuccess"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- MANAGE BOOKS -->
+    <div class="tab" id="tab-books">
+      <div class="section-header">
+        <h3>All NCERT Books</h3>
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="searchBooks" placeholder="Search books...">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="booksTable">
+          <thead><tr><th>Class</th><th>Subject</th><th>Title</th><th>Medium</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="empty-state" id="booksEmpty" style="display:none;">
+          <div class="empty-icon">📭</div><p>No books uploaded yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANAGE PAPERS -->
+    <div class="tab" id="tab-papers">
+      <div class="section-header">
+        <h3>All Sample Papers</h3>
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="searchPapers" placeholder="Search papers...">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="papersTable">
+          <thead><tr><th>Class</th><th>Subject</th><th>Title</th><th>Year</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="empty-state" id="papersEmpty" style="display:none;">
+          <div class="empty-icon">📭</div><p>No papers uploaded yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANAGE EBOOKS -->
+    <div class="tab" id="tab-ebooks">
+      <div class="section-header">
+        <h3>All eBooks</h3>
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="searchEbooks" placeholder="Search eBooks...">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="ebooksTable">
+          <thead><tr><th>Title</th><th>Category</th><th>Description</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="empty-state" id="ebooksEmpty" style="display:none;">
+          <div class="empty-icon">📭</div><p>No eBooks uploaded yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="tab" id="tab-settings">
+      <div class="section-box" style="max-width:500px;">
+        <h3>🔑 Change Admin Password</h3>
+        <form class="form" id="passForm" style="max-width:100%;">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="currentPass" required>
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="newPass" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="confirmPass" required>
+          </div>
+          <div class="form-error" id="passError"></div>
+          <div class="form-success" id="passSuccess"></div>
+          <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+      </div>
+      <div class="section-box danger-zone" style="max-width:500px; margin-top:20px;">
+        <h3>⚠️ Danger Zone</h3>
+        <p>Clear all uploaded data. This cannot be undone.</p>
+        <button class="btn btn-danger" id="clearBtn">🗑️ Clear All Data</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+/* ===================== AUTH ===================== */
+if (localStorage.getItem('vf_admin_session') !== 'active') {
+  window.location.href = 'index.html';
+}
+
+/* ===================== DATA ===================== */
+const KEYS = { books: 'vf_books', papers: 'vf_papers', ebooks: 'vf_ebooks', admin: 'vf_admin' };
+
+function get(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
+function set(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
+function esc(s) { return (s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function fmtDate(iso) { if (!iso) return '-'; const d = new Date(iso); return d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}); }
+
+function initData() {
+  if (!localStorage.getItem(KEYS.papers)) {
+    set(KEYS.papers, [
+      {id:uid(), cls:'10', subject:'Mathematics (Standard)', title:'Sample Paper 2026', desc:'Full CBSE pattern with step-marking answer key.', pdfUrl:'', year:'2026', date:new Date().toISOString()},
+      {id:uid(), cls:'10', subject:'Science', title:'Sample Paper 2026', desc:'Physics, Chemistry & Biology combined.', pdfUrl:'', year:'2026', date:new Date().toISOString()},
+      {id:uid(), cls:'9', subject:'Mathematics', title:'Model Test Paper', desc:'Term-pattern paper with marking scheme.', pdfUrl:'', year:'2026', date:new Date().toISOString()},
+    ]);
+  }
+  if (!localStorage.getItem(KEYS.books)) {
+    set(KEYS.books, [
+      {id:uid(), class:'10', subject:'Mathematics', title:'NCERT Maths Class 10', desc:'Complete textbook', pdfUrl:'https://ncert.nic.in/textbook/pdf/jemh1dd.zip', medium:'English', date:new Date().toISOString()},
+      {id:uid(), class:'10', subject:'Science', title:'NCERT Science Class 10', desc:'Physics, Chemistry, Biology', pdfUrl:'https://ncert.nic.in/textbook/pdf/jesc1dd.zip', medium:'English', date:new Date().toISOString()},
+    ]);
+  }
+  if (!localStorage.getItem(KEYS.ebooks)) set(KEYS.ebooks, []);
+  if (!localStorage.getItem(KEYS.admin)) set(KEYS.admin, {password:'vidyafree123'});
+}
+initData();
+
+/* ===================== NAVIGATION ===================== */
+const navItems = document.querySelectorAll('.nav-item');
+const tabs = document.querySelectorAll('.tab');
+const pageTitle = document.getElementById('pageTitle');
+const sidebar = document.getElementById('sidebar');
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const tabId = item.dataset.tab;
+    navItems.forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    tabs.forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    pageTitle.textContent = item.textContent.trim();
+    sidebar.classList.remove('open');
+    if (tabId === 'books') renderBooks();
+    if (tabId === 'papers') renderPapers();
+    if (tabId === 'ebooks') renderEbooks();
+    if (tabId === 'dashboard') updateDashboard();
+  });
+});
+
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+});
+
+/* ===================== LOGOUT ===================== */
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.removeItem('vf_admin_session');
+  window.location.href = 'index.html';
+});
+
+/* ===================== UPLOAD TABS ===================== */
+const uploadTabs = document.querySelectorAll('.upload-tab');
+const uploadForms = document.querySelectorAll('.upload-form');
+uploadTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    uploadTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const type = tab.dataset.upload;
+    uploadForms.forEach(f => f.classList.remove('active'));
+    document.getElementById('form-' + type).classList.add('active');
+  });
+});
+
+/* ===================== DASHBOARD ===================== */
+function updateDashboard() {
+  const books = get(KEYS.books), papers = get(KEYS.papers), ebooks = get(KEYS.ebooks);
+  document.getElementById('dashBookCount').textContent = books.length;
+  document.getElementById('dashPaperCount').textContent = papers.length;
+  document.getElementById('dashEbookCount').textContent = ebooks.length;
+  document.getElementById('dashTotal').textContent = books.length + papers.length + ebooks.length;
+
+  const recent = [...books.map(b=>({...b,type:'Book'})), ...papers.map(p=>({...p,type:'Paper'})), ...ebooks.map(e=>({...e,type:'eBook'}))]
+    .sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+  const tbody = document.querySelector('#recentTable tbody');
+  const empty = document.getElementById('recentEmpty');
+  if (recent.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; }
+  else {
+    empty.style.display = 'none';
+    tbody.innerHTML = recent.map(r => `
+      <tr><td><span style="font-family:var(--mono);font-size:.7rem;background:var(--marigold-lt);color:var(--marigold-dk);padding:2px 8px;border-radius:999px;">${r.type}</span></td>
+      <td><strong>${esc(r.title)}</strong></td><td>${r.class || r.cls || '-'}</td><td>${esc(r.subject || r.category || '-')}</td>
+      <td style="font-size:.78rem;color:var(--text-soft)">${fmtDate(r.date)}</td></tr>
+    `).join('');
+  }
+}
+updateDashboard();
+
+/* ===================== UPLOAD HANDLERS ===================== */
+document.getElementById('form-book').addEventListener('submit', e => {
+  e.preventDefault();
+  const book = {
+    id: uid(), class: document.getElementById('bookClass').value,
+    subject: document.getElementById('bookSubject').value.trim(),
+    title: document.getElementById('bookTitle').value.trim(),
+    desc: document.getElementById('bookDesc').value.trim(),
+    pdfUrl: document.getElementById('bookPdfUrl').value.trim(),
+    medium: document.getElementById('bookMedium').value,
+    date: new Date().toISOString()
+  };
+  const books = get(KEYS.books); books.push(book); set(KEYS.books, books);
+  document.getElementById('bookSuccess').textContent = '✅ Book uploaded!';
+  e.target.reset();
+  updateDashboard();
+  setTimeout(() => document.getElementById('bookSuccess').textContent = '', 3000);
+});
+
+document.getElementById('form-paper').addEventListener('submit', e => {
+  e.preventDefault();
+  const paper = {
+    id: uid(), cls: document.getElementById('paperClass').value,
+    subject: document.getElementById('paperSubject').value.trim(),
+    title: document.getElementById('paperTitle').value.trim(),
+    desc: document.getElementById('paperDesc').value.trim(),
+    pdfUrl: document.getElementById('paperPdfUrl').value.trim(),
+    year: document.getElementById('paperYear').value.trim(),
+    date: new Date().toISOString()
+  };
+  const papers = get(KEYS.papers); papers.push(paper); set(KEYS.papers, papers);
+  document.getElementById('paperSuccess').textContent = '✅ Paper uploaded!';
+  e.target.reset();
+  updateDashboard();
+  setTimeout(() => document.getElementById('paperSuccess').textContent = '', 3000);
+});
+
+document.getElementById('form-ebook').addEventListener('submit', e => {
+  e.preventDefault();
+  const ebook = {
+    id: uid(), title: document.getElementById('ebookTitle').value.trim(),
+    category: document.getElementById('ebookCategory').value.trim(),
+    desc: document.getElementById('ebookDesc').value.trim(),
+    pdfUrl: document.getElementById('ebookPdfUrl').value.trim(),
+    date: new Date().toISOString()
+  };
+  const ebooks = get(KEYS.ebooks); ebooks.push(ebook); set(KEYS.ebooks, ebooks);
+  document.getElementById('ebookSuccess').textContent = '✅ eBook uploaded!';
+  e.target.reset();
+  updateDashboard();
+  setTimeout(() => document.getElementById('ebookSuccess').textContent = '', 3000);
+});
+
+/* ===================== RENDER TABLES ===================== */
+function renderBooks(filter) {
+  const tbody = document.querySelector('#booksTable tbody');
+  const empty = document.getElementById('booksEmpty');
+  let books = get(KEYS.books);
+  if (filter) { const q = filter.toLowerCase(); books = books.filter(b => (b.title+b.subject+b.class).toLowerCase().includes(q)); }
+  if (books.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = books.map(b => `
+    <tr><td>${esc(b.class)}</td><td>${esc(b.subject)}</td><td><strong>${esc(b.title)}</strong></td><td>${esc(b.medium)}</td>
+    <td><div class="table-actions"><a href="${b.pdfUrl}" target="_blank" class="btn btn-ghost btn-sm">View</a>
+    <button class="btn btn-danger btn-sm" onclick="del('books','${b.id}')">Delete</button></div></td></tr>
+  `).join('');
+}
+
+function renderPapers(filter) {
+  const tbody = document.querySelector('#papersTable tbody');
+  const empty = document.getElementById('papersEmpty');
+  let papers = get(KEYS.papers);
+  if (filter) { const q = filter.toLowerCase(); papers = papers.filter(p => (p.title+p.subject+p.cls).toLowerCase().includes(q)); }
+  if (papers.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = papers.map(p => `
+    <tr><td>${esc(p.cls)}</td><td>${esc(p.subject)}</td><td><strong>${esc(p.title)}</strong></td><td>${esc(p.year || '-')}</td>
+    <td><div class="table-actions"><a href="${p.pdfUrl || '#'}" target="_blank" class="btn btn-ghost btn-sm">View</a>
+    <button class="btn btn-danger btn-sm" onclick="del('papers','${p.id}')">Delete</button></div></td></tr>
+  `).join('');
+}
+
+function renderEbooks(filter) {
+  const tbody = document.querySelector('#ebooksTable tbody');
+  const empty = document.getElementById('ebooksEmpty');
+  let ebooks = get(KEYS.ebooks);
+  if (filter) { const q = filter.toLowerCase(); ebooks = ebooks.filter(e => (e.title+e.category).toLowerCase().includes(q)); }
+  if (ebooks.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = ebooks.map(e => `
+    <tr><td><strong>${esc(e.title)}</strong></td><td>${esc(e.category || '-')}</td><td>${esc(e.desc || '-')}</td>
+    <td><div class="table-actions"><a href="${e.pdfUrl || '#'}" target="_blank" class="btn btn-ghost btn-sm">View</a>
+    <button class="btn btn-danger btn-sm" onclick="del('ebooks','${e.id}')">Delete</button></div></td></tr>
+  `).join('');
+}
+
+/* ===================== SEARCH ===================== */
+document.getElementById('searchBooks').addEventListener('input', e => renderBooks(e.target.value));
+document.getElementById('searchPapers').addEventListener('input', e => renderPapers(e.target.value));
+document.getElementById('searchEbooks').addEventListener('input', e => renderEbooks(e.target.value));
+
+/* ===================== DELETE ===================== */
+window.del = function(type, id) {
+  if (!confirm('Delete this item?')) return;
+  const key = KEYS[type];
+  set(key, get(key).filter(item => item.id !== id));
+  if (type === 'books') renderBooks(document.getElementById('searchBooks').value);
+  if (type === 'papers') renderPapers(document.getElementById('searchPapers').value);
+  if (type === 'ebooks') renderEbooks(document.getElementById('searchEbooks').value);
+  updateDashboard();
+};
+
+/* ===================== PASSWORD ===================== */
+document.getElementById('passForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const cur = document.getElementById('currentPass').value;
+  const nw = document.getElementById('newPass').value;
+  const cf = document.getElementById('confirmPass').value;
+  const admin = get(KEYS.admin);
+  document.getElementById('passError').textContent = '';
+  document.getElementById('passSuccess').textContent = '';
+  if (cur !== (admin.password || 'vidyafree123')) { document.getElementById('passError').textContent = 'Current password is wrong.'; return; }
+  if (nw !== cf) { document.getElementById('passError').textContent = 'Passwords do not match.'; return; }
+  if (nw.length < 6) { document.getElementById('passError').textContent = 'Min 6 characters.'; return; }
+  set(KEYS.admin, {password: nw});
+  document.getElementById('passSuccess').textContent = '✅ Password updated!';
+  e.target.reset();
+});
+
+/* ===================== CLEAR DATA ===================== */
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (!confirm('⚠️ Permanently delete ALL data?')) return;
+  localStorage.removeItem(KEYS.books);
+  localStorage.removeItem(KEYS.papers);
+  localStorage.removeItem(KEYS.ebooks);
+  initData();
+  updateDashboard();
+  renderBooks(); renderPapers(); renderEbooks();
+  alert('All data reset to defaults.');
+});
+</script>
+</body>
+</html>
